@@ -7,162 +7,151 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Libre+Caslon+Text:wght@400;700&family=Libre+Franklin:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Libre+Caslon+Text:wght@400;700&family=Oswald:wght@500;600;700&display=swap">
 <style>
-/* Layout: a projector-first game board (6 casebook chapters x 5 values) over a team scoring rail; clues take the full screen. Single committed dark look. */
+/* Layout: the TV board. Black frame, bright blue cells, gold dollar values, contestant podiums underneath; clues fill the screen. */
 :root {
   color-scheme: dark;
-  --ink: #0a0f22;        /* page ground */
-  --tile: #172566;       /* board tile / clue screen */
-  --tile-hi: #22358a;    /* hover */
-  --rule: #2c3a7a;       /* gridlines */
-  --gold: #e9bb4d;       /* values, responses */
-  --paper: #f4efe3;      /* text */
-  --muted: #9aa5cf;      /* secondary text */
-  --right: #49c487;
-  --wrong: #e5675f;
-  --f-value: "Anton", "Impact", "Arial Narrow", sans-serif;
+  --black: #000;
+  --blue: #060ce9;
+  --blue-hi: #2a31ff;
+  --podium: #0a0f8c;
+  --gold: #d69f4c;
+  --white: #fff;
+  --grey: #8a8a8a;
+  --right: #2ecc71;
+  --wrong: #ff4a3d;
+  --f-num: "Anton", Impact, "Arial Narrow", sans-serif;
+  --f-cat: "Oswald", "Arial Narrow", Arial, sans-serif;
   --f-clue: "Libre Caslon Text", Georgia, "Times New Roman", serif;
-  --f-ui: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
-body { background: var(--ink); color: var(--paper); font-family: var(--f-ui); font-size: 15px; }
+body { background: var(--black); color: var(--white); font-family: var(--f-cat); font-size: 15px; }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
 .app {
   max-width: 1400px; margin: 0 auto;
-  padding-block: 18px 28px;
+  padding-block: 16px 20px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid; gap: 18px;
+  display: grid; gap: 16px;
 }
-.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
-.brand { display: grid; gap: 2px; }
-.course { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-.brand h1 { margin: 0; font-family: var(--f-value); font-weight: 400; font-size: clamp(30px, 4vw, 44px); letter-spacing: .03em; color: var(--paper); line-height: 1; }
-.brand h1 span { color: var(--gold); }
-.tools { display: flex; flex-wrap: wrap; gap: 8px; }
-.btn {
-  border: 1px solid var(--rule); background: transparent; border-radius: 6px;
-  padding: 8px 14px; font-weight: 600; font-size: 14px;
-}
-.btn:hover { border-color: var(--muted); }
-.btn.primary { background: var(--gold); color: var(--ink); border-color: var(--gold); }
-.btn.primary:hover { filter: brightness(1.07); }
-.btn.armed { background: var(--wrong); border-color: var(--wrong); color: var(--ink); }
-.btn:disabled { opacity: .4; cursor: default; }
-
-.board-wrap { overflow-x: auto; border-radius: 8px; }
+.board-wrap { overflow-x: auto; }
 .board {
   display: grid; grid-template-columns: repeat(6, minmax(112px, 1fr));
-  gap: 4px; background: var(--ink); min-width: 720px;
+  gap: 6px; background: var(--black); border: 6px solid var(--black); min-width: 720px;
 }
 .cat {
-  background: var(--tile); padding: 12px 8px; text-align: center;
-  display: grid; align-content: center; gap: 6px; min-height: 96px;
-  border-bottom: 3px solid var(--ink);
+  background: var(--blue); padding: 10px 8px; text-align: center;
+  display: grid; place-items: center; min-height: 100px; margin-bottom: 6px;
 }
-.cat b { font-family: var(--f-clue); font-weight: 700; text-transform: uppercase; font-size: clamp(13px, 1.35vw, 19px); letter-spacing: .03em; line-height: 1.15; text-wrap: balance; }
-.cat small { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; line-height: 1.3; }
+.cat span {
+  font-family: var(--f-cat); font-weight: 700; text-transform: uppercase;
+  font-size: clamp(15px, 1.7vw, 24px); line-height: 1.1; letter-spacing: .01em;
+  text-shadow: 2px 2px 0 var(--black); text-wrap: balance;
+}
 .tile {
-  background: var(--tile); border: 0; height: clamp(58px, 10vh, 100px);
-  font-family: var(--f-value); font-size: clamp(26px, 3.4vw, 48px); color: var(--gold);
-  text-shadow: 2px 3px 0 rgba(0,0,0,.45); transition: background .15s;
+  background: var(--blue); border: 0; height: clamp(60px, 11vh, 108px);
+  font-family: var(--f-num); font-size: clamp(30px, 4vw, 58px); color: var(--gold);
+  text-shadow: 3px 3px 0 var(--black);
 }
-.tile:hover { background: var(--tile-hi); }
-.tile.used { background: color-mix(in srgb, var(--tile) 45%, var(--ink)); cursor: default; }
+.tile:hover { background: var(--blue-hi); }
+.tile.used { cursor: default; }
+.tile.used:hover { background: var(--blue); }
 
-.teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-.team {
-  border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px;
-  display: grid; gap: 6px; min-width: 0;
+.teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.team { background: #1a1a1a; border: 4px solid #2b2b2b; display: grid; min-width: 0; text-align: center; }
+.score {
+  background: var(--podium); padding: 8px 6px;
+  font-family: var(--f-num); font-size: clamp(30px, 3.2vw, 42px); line-height: 1.15;
+  font-variant-numeric: tabular-nums; text-shadow: 2px 2px 0 var(--black);
 }
-.team input {
-  width: 100%; background: transparent; border: 0; border-bottom: 1px dashed var(--rule);
-  color: var(--paper); font: 600 15px var(--f-ui); padding: 2px 0;
-}
-.score { font-family: var(--f-value); font-size: 34px; letter-spacing: .02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .score.neg { color: var(--wrong); }
-.adj { display: flex; flex-wrap: wrap; gap: 6px; }
-.adj button { border: 1px solid var(--rule); background: transparent; border-radius: 5px; padding: 3px 8px; font-size: 12px; color: var(--muted); }
-.adj button:hover { color: var(--paper); border-color: var(--muted); }
-.add-team { border: 1px dashed var(--rule); border-radius: 8px; background: transparent; color: var(--muted); font-weight: 600; min-height: 96px; }
-.add-team:hover { color: var(--paper); border-color: var(--muted); }
-.hint { margin: 0; color: var(--muted); font-size: 13px; }
-kbd { font-family: var(--f-ui); border: 1px solid var(--rule); border-radius: 4px; padding: 0 5px; font-size: 12px; }
+.team input {
+  width: 100%; background: transparent; border: 0; color: var(--white); text-align: center;
+  font: 600 17px var(--f-cat); text-transform: uppercase; letter-spacing: .03em; padding: 8px 6px 4px;
+}
+.adj { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 2px 6px 8px; }
+.adj button { border: 1px solid #3a3a3a; background: transparent; padding: 2px 8px; font-size: 12px; color: var(--grey); }
+.adj button:hover { color: var(--white); border-color: var(--grey); }
+.add-team { border: 4px dashed #2b2b2b; background: transparent; color: var(--grey); font-weight: 600; text-transform: uppercase; min-height: 110px; }
+.add-team:hover { color: var(--white); }
+
+.controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.btn {
+  border: 2px solid #3a3a3a; background: transparent; padding: 7px 14px;
+  font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: .04em;
+}
+.btn:hover { border-color: var(--white); }
+.btn.primary { background: var(--blue); border-color: var(--blue); }
+.btn.primary:hover { background: var(--blue-hi); border-color: var(--blue-hi); }
+.btn.armed { background: var(--wrong); border-color: var(--wrong); color: var(--black); }
+.btn:disabled { opacity: .35; cursor: default; }
 
 /* full-screen clue */
 .overlay {
-  position: fixed; inset: 0; z-index: 20; background: var(--tile);
+  position: fixed; inset: 0; z-index: 20; background: var(--blue);
   overflow-y: auto;
   padding-top: calc(20px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-.ov { max-width: 1100px; min-height: 100%; margin: 0 auto; display: grid; grid-template-rows: auto 1fr auto; gap: 20px; }
+.ov { max-width: 1150px; min-height: 100%; margin: 0 auto; display: grid; grid-template-rows: auto 1fr auto; gap: 20px; }
 .ov-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.ov-cat { font-family: var(--f-clue); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; font-size: clamp(14px, 1.8vw, 20px); color: var(--muted); }
-.ov-val { font-family: var(--f-value); font-size: clamp(28px, 3.5vw, 44px); color: var(--gold); }
-.ov-body { display: grid; align-content: center; gap: 28px; text-align: center; }
+.ov-cat { font-family: var(--f-cat); font-weight: 700; text-transform: uppercase; font-size: clamp(16px, 2vw, 24px); text-shadow: 2px 2px 0 var(--black); }
+.ov-val { font-family: var(--f-num); font-size: clamp(30px, 3.6vw, 46px); color: var(--gold); text-shadow: 3px 3px 0 var(--black); }
+.ov-body { display: grid; align-content: center; gap: 32px; text-align: center; }
 .clue {
-  margin: 0; font-family: var(--f-clue); text-transform: uppercase; font-weight: 400;
-  font-size: clamp(22px, 3.6vw, 50px); line-height: 1.3; letter-spacing: .01em;
-  text-shadow: 2px 3px 0 rgba(0,0,0,.4); text-wrap: balance;
+  margin: 0; font-family: var(--f-clue); text-transform: uppercase; font-weight: 700;
+  font-size: clamp(24px, 4vw, 56px); line-height: 1.25;
+  text-shadow: 4px 4px 0 var(--black); text-wrap: balance;
 }
-.resp { display: grid; gap: 10px; justify-items: center; animation: rise .25s ease-out; }
-.resp .r { font-family: var(--f-clue); font-weight: 700; color: var(--gold); font-size: clamp(20px, 2.8vw, 36px); text-wrap: balance; }
-.resp .n { max-width: 70ch; color: var(--muted); font-size: clamp(13px, 1.3vw, 16px); line-height: 1.55; text-wrap: pretty; }
-@keyframes rise { from { opacity: .3; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.dd-title { font-family: var(--f-value); font-size: clamp(56px, 11vw, 150px); color: var(--gold); line-height: .95; letter-spacing: .02em; text-shadow: 4px 6px 0 rgba(0,0,0,.45); }
+.resp .r {
+  font-family: var(--f-clue); font-weight: 700; text-transform: uppercase; color: var(--gold);
+  font-size: clamp(20px, 2.8vw, 38px); text-shadow: 3px 3px 0 var(--black); text-wrap: balance;
+}
+.dd-title { font-family: var(--f-num); text-transform: uppercase; font-size: clamp(60px, 12vw, 170px); color: var(--gold); line-height: .95; text-shadow: 6px 6px 0 var(--black); }
 .dd-panel { display: grid; gap: 14px; justify-items: center; }
-.label { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.label { font-size: 14px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.chip { border: 1px solid var(--rule); background: rgba(0,0,0,.18); border-radius: 999px; padding: 8px 16px; font-weight: 600; }
-.chip.on { background: var(--gold); color: var(--ink); border-color: var(--gold); }
-.wager { width: 180px; text-align: center; background: rgba(0,0,0,.25); border: 1px solid var(--rule); border-radius: 6px; color: var(--paper); font: 400 30px var(--f-value); padding: 6px; }
+.chip { border: 2px solid var(--white); background: transparent; padding: 7px 16px; font-weight: 600; text-transform: uppercase; }
+.chip.on { background: var(--white); color: var(--blue); }
+.wager { width: 180px; text-align: center; background: var(--black); border: 2px solid var(--white); color: var(--white); font: 400 32px var(--f-num); padding: 6px; }
 .ov-foot { display: grid; gap: 14px; }
+.ov .btn { border-color: var(--white); }
+.ov .btn.primary { background: var(--white); color: var(--blue); }
 .marks { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.mark { display: flex; align-items: center; gap: 6px; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 8px 6px 12px; background: rgba(0,0,0,.15); }
-.mark .nm { font-weight: 600; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mark button { border: 0; border-radius: 5px; padding: 5px 10px; font-weight: 800; color: var(--ink); }
+.mark { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,.35); padding: 6px 8px 6px 12px; }
+.mark .nm { font-weight: 600; text-transform: uppercase; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mark button { border: 0; padding: 5px 10px; font-weight: 700; color: var(--black); }
 .mark .ok { background: var(--right); }
 .mark .no { background: var(--wrong); }
-.mark button:disabled { opacity: .25; cursor: default; }
-.mark .tag { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.mark .tag { font-weight: 700; }
 .mark .tag.right { color: var(--right); } .mark .tag.wrong { color: var(--wrong); }
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.timer { font-family: var(--f-value); font-size: clamp(36px, 5vw, 64px); color: var(--gold); font-variant-numeric: tabular-nums; }
+.timer { font-family: var(--f-num); font-size: clamp(40px, 5vw, 70px); font-variant-numeric: tabular-nums; text-shadow: 3px 3px 0 var(--black); }
 .timer.done { color: var(--wrong); }
 .fw { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; width: 100%; max-width: 900px; margin: 0 auto; }
-.fw label { display: grid; gap: 6px; justify-items: center; border: 1px solid var(--rule); border-radius: 8px; padding: 12px; background: rgba(0,0,0,.15); }
-.fw .wager { width: 100%; font-size: 26px; }
-.fw small { color: var(--muted); font-size: 12px; }
-.stand { display: grid; gap: 8px; width: 100%; max-width: 560px; margin: 0 auto; }
-.stand div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--rule); font-size: clamp(18px, 2.2vw, 26px); }
-.stand div:first-child { color: var(--gold); }
-.stand b { font-family: var(--f-value); font-weight: 400; font-variant-numeric: tabular-nums; }
-@media (prefers-reduced-motion: reduce) { .resp { animation: none; } .tile { transition: none; } }
+.fw label { display: grid; gap: 6px; justify-items: center; background: rgba(0,0,0,.35); padding: 12px; text-transform: uppercase; font-weight: 600; }
+.fw .wager { width: 100%; font-size: 28px; }
+.fw small { font-size: 12px; text-transform: none; font-weight: 400; }
+.stand { display: grid; gap: 4px; width: 100%; max-width: 560px; margin: 0 auto; }
+.stand div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; background: rgba(0,0,0,.35); text-transform: uppercase; font-size: clamp(18px, 2.2vw, 26px); }
+.stand b { font-family: var(--f-num); font-weight: 400; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
 <div class="app">
-  <header class="top">
-    <div class="brand">
-      <span class="course">Civil Procedure 215A &middot; SLO Lab &middot; Fall 2026</span>
-      <h1>Civ Pro <span>Jeopardy</span></h1>
-    </div>
-    <div class="tools">
-      <button class="btn" id="btn-undo" type="button">Undo last score</button>
-      <button class="btn primary" id="btn-final" type="button">Final Jeopardy</button>
-      <button class="btn" id="btn-new" type="button">New game</button>
-    </div>
-  </header>
   <div class="board-wrap"><div class="board" id="board" aria-label="Game board"></div></div>
   <section class="teams" id="teams" aria-label="Team scores"></section>
-  <p class="hint">Click a value to open its clue. <kbd>Space</kbd> reveals the response, <kbd>Esc</kbd> returns to the board. Two Daily Doubles are hidden on the board each game. Team names are editable.</p>
+  <div class="controls">
+    <button class="btn" id="btn-undo" type="button">Undo</button>
+    <button class="btn" id="btn-new" type="button">New game</button>
+    <button class="btn primary" id="btn-final" type="button">Final Jeopardy</button>
+  </div>
 </div>
 <div class="overlay" id="ov" hidden></div>
 
@@ -269,7 +258,7 @@ function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e
 function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); return v && v.teams ? v : null; } catch (e) { return null; } }
 
 function renderBoard() {
-  let h = CATS.map((c) => `<div class="cat"><b>${esc(c.name)}</b><small>${esc(c.sub)}</small></div>`).join("");
+  let h = CATS.map((c) => `<div class="cat"><span>${esc(c.name)}</span></div>`).join("");
   for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) {
     const k = c + "-" + r, used = S.used[k];
     h += `<button type="button" class="tile${used ? " used" : ""}" data-c="${c}" data-r="${r}" ${used ? "disabled aria-label=\"Used\"" : `aria-label="${esc(CATS[c].name)} for ${VALUES[r]}"`}>${used ? "" : "$" + VALUES[r]}</button>`;
@@ -278,11 +267,11 @@ function renderBoard() {
 }
 function renderTeams() {
   let h = S.teams.map((t, i) => `<div class="team">
-      <input id="team-name-${i}" data-name="${i}" value="${esc(t.name)}" aria-label="Team ${i + 1} name" maxlength="24">
       <div class="score${t.score < 0 ? " neg" : ""}">${money(t.score)}</div>
+      <input id="team-name-${i}" data-name="${i}" value="${esc(t.name)}" aria-label="Team ${i + 1} name" maxlength="24">
       <div class="adj"><button type="button" data-adj="-100" data-t="${i}">−100</button><button type="button" data-adj="100" data-t="${i}">+100</button>${S.teams.length > 2 ? `<button type="button" data-rm="${i}">Remove</button>` : ""}</div>
     </div>`).join("");
-  if (S.teams.length < 6) h += `<button type="button" class="add-team" id="add-team">+ Add team</button>`;
+  if (S.teams.length < 6) h += `<button type="button" class="add-team" id="add-team">Add team</button>`;
   $("#teams").innerHTML = h;
   $("#btn-undo").disabled = !S.hist.length;
 }
@@ -300,7 +289,7 @@ function marksHtml(teamIdx, amt) {
       : `<button type="button" class="ok" data-act="mark" data-t="${i}" data-ok="1" aria-label="${esc(S.teams[i].name)} correct">✓</button><button type="button" class="no" data-act="mark" data-t="${i}" data-ok="0" aria-label="${esc(S.teams[i].name)} incorrect">✗</button>`}</div>`;
   }).join("")}</div>`;
 }
-function respHtml(x) { return O.revealed ? `<div class="resp"><div class="r">${esc(x.r)}</div><div class="n">${esc(x.n)}</div></div>` : ""; }
+function respHtml(x) { return O.revealed ? `<div class="resp"><div class="r">${esc(x.r)}</div></div>` : ""; }
 
 function renderOverlay() {
   const ov = $("#ov");
@@ -311,16 +300,16 @@ function renderOverlay() {
     const max = O.t == null ? 1000 : Math.max(S.teams[O.t].score, 1000);
     h = `<div class="ov">${head(CATS[O.c].name, "$" + VALUES[O.r])}
       <div class="ov-body"><div class="dd-title">Daily Double</div>
-        <div class="dd-panel"><span class="label">Which team picked it?</span>
+        <div class="dd-panel"><span class="label">Team</span>
           <div class="chips">${S.teams.map((t, i) => `<button type="button" class="chip${O.t === i ? " on" : ""}" data-act="ddteam" data-t="${i}">${esc(t.name)}</button>`).join("")}</div>
-          <span class="label">Wager (5 to ${money(max)})</span>
+          <span class="label">Wager (up to ${money(max)})</span>
           <input class="wager" id="dd-wager" type="number" min="5" max="${max}" step="100" value="${esc(O.wager)}" inputmode="numeric">
         </div></div>
       <div class="ov-foot"><div class="actions"><button type="button" class="btn" data-act="close">Back to board</button><button type="button" class="btn primary" data-act="ddgo" ${O.t == null ? "disabled" : ""}>Show the clue</button></div></div></div>`;
   } else if (O.mode === "clue") {
     const x = CATS[O.c].clues[O.r];
     const teams = O.dd ? [O.t] : S.teams.map((_, i) => i);
-    h = `<div class="ov">${head(CATS[O.c].name, O.dd ? "Daily Double · " + money(O.value) : "$" + O.value)}
+    h = `<div class="ov">${head(CATS[O.c].name, O.dd ? money(O.value) : "$" + O.value)}
       <div class="ov-body"><p class="clue">${esc(x.c)}</p>${respHtml(x)}</div>
       <div class="ov-foot">${marksHtml(teams, O.value)}
         <div class="actions">${O.revealed ? "" : `<button type="button" class="btn primary" data-act="reveal">Reveal response</button>`}<button type="button" class="btn" data-act="close">Back to board</button></div></div></div>`;
@@ -329,15 +318,15 @@ function renderOverlay() {
       <div class="ov-body"><span class="label">The category is</span><p class="clue">${esc(FINAL.cat)}</p>
         <div class="fw">${S.teams.map((t, i) => { const mx = Math.max(t.score, 0); return `<label for="final-wager-${i}"><span>${esc(t.name)}</span>
           <input class="wager" id="final-wager-${i}" data-fw="${i}" type="number" min="0" max="${mx}" step="100" value="${esc(O.wagers[i] ?? "")}" inputmode="numeric" ${mx === 0 ? "disabled" : ""}>
-          <small>${mx === 0 ? "No positive score, wager $0" : "Up to " + money(mx)}</small></label>`; }).join("")}</div></div>
+          <small>${mx === 0 ? "$0" : "Up to " + money(mx)}</small></label>`; }).join("")}</div></div>
       <div class="ov-foot"><div class="actions"><button type="button" class="btn" data-act="close">Back to board</button><button type="button" class="btn primary" data-act="fgo">Show the clue</button></div></div></div>`;
   } else if (O.mode === "fclue") {
-    h = `<div class="ov">${head("Final Jeopardy · " + FINAL.cat, "")}
+    h = `<div class="ov">${head(FINAL.cat, "")}
       <div class="ov-body"><p class="clue">${esc(FINAL.c)}</p>${respHtml(FINAL)}</div>
       <div class="ov-foot">${O.revealed ? marksHtml(S.teams.map((_, i) => i), (i) => O.wagers[i] || 0) : `<div class="actions"><span class="timer" id="ov-timer">${O.timer == null ? "0:30" : "0:" + String(O.timer).padStart(2, "0")}</span></div>`}
         <div class="actions">${O.revealed
           ? `<button type="button" class="btn primary" data-act="stand">Final standings</button>`
-          : `<button type="button" class="btn" data-act="timer">Start 30-second clock</button><button type="button" class="btn primary" data-act="reveal">Reveal response</button>`}</div></div></div>`;
+          : `<button type="button" class="btn" data-act="timer">Start clock</button><button type="button" class="btn primary" data-act="reveal">Reveal response</button>`}</div></div></div>`;
   } else if (O.mode === "stand") {
     const rows = S.teams.map((t) => t).sort((a, b) => b.score - a.score);
     h = `<div class="ov">${head("Final standings", "")}
