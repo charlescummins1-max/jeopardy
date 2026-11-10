@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>215A Civ Pro Jeopardy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Libre+Caslon+Text:wght@400;700&family=Libre+Franklin:wght@400;600;800&display=swap">
+<style>
+/* Layout: a projector-first game board (6 casebook chapters x 5 values) over a team scoring rail; clues take the full screen. Single committed dark look. */
+:root {
+  color-scheme: dark;
+  --ink: #0a0f22;        /* page ground */
+  --tile: #172566;       /* board tile / clue screen */
+  --tile-hi: #22358a;    /* hover */
+  --rule: #2c3a7a;       /* gridlines */
+  --gold: #e9bb4d;       /* values, responses */
+  --paper: #f4efe3;      /* text */
+  --muted: #9aa5cf;      /* secondary text */
+  --right: #49c487;
+  --wrong: #e5675f;
+  --f-value: "Anton", "Impact", "Arial Narrow", sans-serif;
+  --f-clue: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --f-ui: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--ink); color: var(--paper); font-family: var(--f-ui); font-size: 15px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.app {
+  max-width: 1400px; margin: 0 auto;
+  padding-block: 18px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 18px;
+}
+.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.brand { display: grid; gap: 2px; }
+.course { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.brand h1 { margin: 0; font-family: var(--f-value); font-weight: 400; font-size: clamp(30px, 4vw, 44px); letter-spacing: .03em; color: var(--paper); line-height: 1; }
+.brand h1 span { color: var(--gold); }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  border: 1px solid var(--rule); background: transparent; border-radius: 6px;
+  padding: 8px 14px; font-weight: 600; font-size: 14px;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.armed { background: var(--wrong); border-color: var(--wrong); color: var(--ink); }
+.btn:disabled { opacity: .4; cursor: default; }
+
+.board-wrap { overflow-x: auto; border-radius: 8px; }
+.board {
+  display: grid; grid-template-columns: repeat(6, minmax(112px, 1fr));
+  gap: 4px; background: var(--ink); min-width: 720px;
+}
+.cat {
+  background: var(--tile); padding: 12px 8px; text-align: center;
+  display: grid; align-content: center; gap: 6px; min-height: 96px;
+  border-bottom: 3px solid var(--ink);
+}
+.cat b { font-family: var(--f-clue); font-weight: 700; text-transform: uppercase; font-size: clamp(13px, 1.35vw, 19px); letter-spacing: .03em; line-height: 1.15; text-wrap: balance; }
+.cat small { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; line-height: 1.3; }
+.tile {
+  background: var(--tile); border: 0; height: clamp(58px, 10vh, 100px);
+  font-family: var(--f-value); font-size: clamp(26px, 3.4vw, 48px); color: var(--gold);
+  text-shadow: 2px 3px 0 rgba(0,0,0,.45); transition: background .15s;
+}
+.tile:hover { background: var(--tile-hi); }
+.tile.used { background: color-mix(in srgb, var(--tile) 45%, var(--ink)); cursor: default; }
+
+.teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.team {
+  border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px;
+  display: grid; gap: 6px; min-width: 0;
+}
+.team input {
+  width: 100%; background: transparent; border: 0; border-bottom: 1px dashed var(--rule);
+  color: var(--paper); font: 600 15px var(--f-ui); padding: 2px 0;
+}
+.score { font-family: var(--f-value); font-size: 34px; letter-spacing: .02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.score.neg { color: var(--wrong); }
+.adj { display: flex; flex-wrap: wrap; gap: 6px; }
+.adj button { border: 1px solid var(--rule); background: transparent; border-radius: 5px; padding: 3px 8px; font-size: 12px; color: var(--muted); }
+.adj button:hover { color: var(--paper); border-color: var(--muted); }
+.add-team { border: 1px dashed var(--rule); border-radius: 8px; background: transparent; color: var(--muted); font-weight: 600; min-height: 96px; }
+.add-team:hover { color: var(--paper); border-color: var(--muted); }
+.hint { margin: 0; color: var(--muted); font-size: 13px; }
+kbd { font-family: var(--f-ui); border: 1px solid var(--rule); border-radius: 4px; padding: 0 5px; font-size: 12px; }
+
+/* full-screen clue */
+.overlay {
+  position: fixed; inset: 0; z-index: 20; background: var(--tile);
+  overflow-y: auto;
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.ov { max-width: 1100px; min-height: 100%; margin: 0 auto; display: grid; grid-template-rows: auto 1fr auto; gap: 20px; }
+.ov-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ov-cat { font-family: var(--f-clue); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; font-size: clamp(14px, 1.8vw, 20px); color: var(--muted); }
+.ov-val { font-family: var(--f-value); font-size: clamp(28px, 3.5vw, 44px); color: var(--gold); }
+.ov-body { display: grid; align-content: center; gap: 28px; text-align: center; }
+.clue {
+  margin: 0; font-family: var(--f-clue); text-transform: uppercase; font-weight: 400;
+  font-size: clamp(22px, 3.6vw, 50px); line-height: 1.3; letter-spacing: .01em;
+  text-shadow: 2px 3px 0 rgba(0,0,0,.4); text-wrap: balance;
+}
+.resp { display: grid; gap: 10px; justify-items: center; animation: rise .25s ease-out; }
+.resp .r { font-family: var(--f-clue); font-weight: 700; color: var(--gold); font-size: clamp(20px, 2.8vw, 36px); text-wrap: balance; }
+.resp .n { max-width: 70ch; color: var(--muted); font-size: clamp(13px, 1.3vw, 16px); line-height: 1.55; text-wrap: pretty; }
+@keyframes rise { from { opacity: .3; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.dd-title { font-family: var(--f-value); font-size: clamp(56px, 11vw, 150px); color: var(--gold); line-height: .95; letter-spacing: .02em; text-shadow: 4px 6px 0 rgba(0,0,0,.45); }
+.dd-panel { display: grid; gap: 14px; justify-items: center; }
+.label { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.chip { border: 1px solid var(--rule); background: rgba(0,0,0,.18); border-radius: 999px; padding: 8px 16px; font-weight: 600; }
+.chip.on { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.wager { width: 180px; text-align: center; background: rgba(0,0,0,.25); border: 1px solid var(--rule); border-radius: 6px; color: var(--paper); font: 400 30px var(--f-value); padding: 6px; }
+.ov-foot { display: grid; gap: 14px; }
+.marks { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.mark { display: flex; align-items: center; gap: 6px; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 8px 6px 12px; background: rgba(0,0,0,.15); }
+.mark .nm { font-weight: 600; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mark button { border: 0; border-radius: 5px; padding: 5px 10px; font-weight: 800; color: var(--ink); }
+.mark .ok { background: var(--right); }
+.mark .no { background: var(--wrong); }
+.mark button:disabled { opacity: .25; cursor: default; }
+.mark .tag { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.mark .tag.right { color: var(--right); } .mark .tag.wrong { color: var(--wrong); }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.timer { font-family: var(--f-value); font-size: clamp(36px, 5vw, 64px); color: var(--gold); font-variant-numeric: tabular-nums; }
+.timer.done { color: var(--wrong); }
+.fw { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; width: 100%; max-width: 900px; margin: 0 auto; }
+.fw label { display: grid; gap: 6px; justify-items: center; border: 1px solid var(--rule); border-radius: 8px; padding: 12px; background: rgba(0,0,0,.15); }
+.fw .wager { width: 100%; font-size: 26px; }
+.fw small { color: var(--muted); font-size: 12px; }
+.stand { display: grid; gap: 8px; width: 100%; max-width: 560px; margin: 0 auto; }
+.stand div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--rule); font-size: clamp(18px, 2.2vw, 26px); }
+.stand div:first-child { color: var(--gold); }
+.stand b { font-family: var(--f-value); font-weight: 400; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .resp { animation: none; } .tile { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <span class="course">Civil Procedure 215A &middot; SLO Lab &middot; Fall 2026</span>
+      <h1>Civ Pro <span>Jeopardy</span></h1>
+    </div>
+    <div class="tools">
+      <button class="btn" id="btn-undo" type="button">Undo last score</button>
+      <button class="btn primary" id="btn-final" type="button">Final Jeopardy</button>
+      <button class="btn" id="btn-new" type="button">New game</button>
+    </div>
+  </header>
+  <div class="board-wrap"><div class="board" id="board" aria-label="Game board"></div></div>
+  <section class="teams" id="teams" aria-label="Team scores"></section>
+  <p class="hint">Click a value to open its clue. <kbd>Space</kbd> reveals the response, <kbd>Esc</kbd> returns to the board. Two Daily Doubles are hidden on the board each game. Team names are editable.</p>
+</div>
+<div class="overlay" id="ov" hidden></div>
+
+<script>
+const VALUES = [200, 400, 600, 800, 1000];
+const CATS = [
+  { name: "Minimum Contacts", sub: "Personal jurisdiction · Wks 2–4 · Ch. 2", clues: [
+    { c: "This 1877 case about a disputed piece of Oregon land is where personal jurisdiction begins: a state's power stops at its borders.",
+      r: "What is Pennoyer v. Neff?", n: "Pennoyer's territorial model: a state's power reaches persons and property within its borders. A judgment against an absent nonresident, served only by publication, was void." },
+    { c: "\"Minimum contacts\" and \"fair play and substantial justice\" come from this 1945 case about a shoe company.",
+      r: "What is International Shoe Co. v. Washington?", n: "International Shoe replaced Pennoyer's physical-presence test with the minimum-contacts / fair-play standard that governs modern specific jurisdiction." },
+    { c: "Burnham upheld this kind of jurisdiction: serving the defendant while he is physically in the state, even on a short visit.",
+      r: "What is tag (transient) jurisdiction?", n: "In Burnham v. Superior Court, a New Jersey father served in California while visiting his kids was subject to jurisdiction there. All nine Justices agreed on the result." },
+    { c: "This type of personal jurisdiction lets a court hear any claim against a corporation, but only where it is \"at home,\" like its state of incorporation or principal place of business.",
+      r: "What is general jurisdiction?", n: "Contrast specific jurisdiction, where the claim must arise out of or relate to the defendant's contacts with the forum (Goodyear, Daimler, Ford)." },
+    { c: "Asahi is the leading case on this theory: a company that sends its product into the market may be sued where the product ends up.",
+      r: "What is the stream of commerce theory?", n: "The Asahi Court split 4–4: O'Connor required \"stream of commerce plus\" (conduct aimed at the forum), while Brennan said awareness that the product would be sold there was enough." }
+  ]},
+  { name: "You've Been Served", sub: "Notice & appearance · Wk 5 · Ch. 3", clues: [
+    { c: "Under Mullane, notice must be \"reasonably calculated\" to tell interested parties about this.",
+      r: "What is the lawsuit (the pendency of the action)?", n: "The full Mullane standard: notice reasonably calculated, under all the circumstances, to apprise interested parties of the pendency of the action and give them a chance to object." },
+    { c: "Mullane said this method, printing notice in a newspaper, is not good enough for people whose addresses are known.",
+      r: "What is notice by publication?", n: "Known beneficiaries were entitled to at least ordinary mail. Publication was acceptable only for those who could not be found with due diligence." },
+    { c: "This Federal Rule of Civil Procedure governs the summons and service of process.",
+      r: "What is Rule 4?", n: "Rule 4 covers who may serve, how individuals and corporations are served, waiver of service (4(d)), and the 90-day deadline to serve (4(m))." },
+    { c: "Under Rule 4(d), a defendant who agrees to skip formal service has done this.",
+      r: "What is waive service?", n: "A defendant who waives gets 60 days to answer (90 if outside the U.S.). One who refuses without good cause can be charged the costs of formal service." },
+    { c: "Under Rule 12(h), if a defendant fails to raise lack of personal jurisdiction in its first response, this happens to the defense.",
+      r: "What is it is waived?", n: "Personal jurisdiction protects an individual right, so it can be waived (Insurance Corp. of Ireland). Subject matter jurisdiction can never be waived." }
+  ]},
+  { name: "Federal Gatekeeping", sub: "Subject matter jurisdiction · Wks 6–7 · Ch. 4", clues: [
+    { c: "Diversity jurisdiction requires an amount in controversy over this dollar figure.",
+      r: "What is $75,000?", n: "The amount must exceed $75,000, exclusive of interest and costs (28 U.S.C. § 1332)." },
+    { c: "Federal question and this are the two main kinds of federal subject matter jurisdiction.",
+      r: "What is diversity jurisdiction?", n: "Federal question: claims arising under federal law (§ 1331). Diversity: citizens of different states plus the amount in controversy (§ 1332)." },
+    { c: "This rule from Strawbridge v. Curtiss says no plaintiff can be a citizen of the same state as any defendant.",
+      r: "What is complete diversity?", n: "One plaintiff from the same state as one defendant destroys diversity jurisdiction." },
+    { c: "Mas v. Perry teaches that a person's state citizenship depends on this: where you live and intend to stay.",
+      r: "What is domicile?", n: "A new domicile requires physical presence plus intent to remain indefinitely. Mrs. Mas kept her Mississippi domicile while studying in Louisiana." },
+    { c: "Gibbs and 28 U.S.C. § 1367 let a federal court hear related state-law claims through this type of jurisdiction.",
+      r: "What is supplemental (pendent) jurisdiction?", n: "The test from Gibbs: the state and federal claims must share a common nucleus of operative fact." }
+  ]},
+  { name: "Wrong Courthouse", sub: "Venue, transfer & FNC · Wk 8 · Ch. 5", clues: [
+    { c: "Unlike jurisdiction, this concept asks which geographic district is the proper place for the case.",
+      r: "What is venue?", n: "In federal court, venue is governed mainly by 28 U.S.C. § 1391." },
+    { c: "Under § 1391, venue is proper where any defendant resides (if all reside in the same state) or where a substantial part of these happened.",
+      r: "What are the events giving rise to the claim?", n: "§ 1391(b)(1) and (b)(2). A fallback in (b)(3) applies only when no district qualifies under either." },
+    { c: "Moving a case from one federal district to a more convenient one under § 1404(a) is called this.",
+      r: "What is a transfer?", n: "§ 1404(a) transfers a case filed in a proper venue. § 1406(a) fixes a filing in an improper venue." },
+    { c: "This doctrine lets a court dismiss a case because a court somewhere else, often in another country, is a much more convenient place to hear it.",
+      r: "What is forum non conveniens?", n: "Federal courts transfer to other federal courts under § 1404(a). Forum non conveniens dismissal is used when the better forum is foreign." },
+    { c: "In Piper Aircraft v. Reyno, the plane crash victims were from this country, which the Court treated as the better forum.",
+      r: "What is Scotland?", n: "Less favorable Scottish law did not bar dismissal, and foreign plaintiffs' choice of a U.S. forum got less deference." }
+  ]},
+  { name: "After Erie", sub: "Ascertaining the applicable law · Wks 10–11 · Ch. 6", clues: [
+    { c: "Erie says that a federal court hearing a diversity case must apply this kind of substantive law.",
+      r: "What is state law?", n: "\"There is no federal general common law.\" Erie Railroad v. Tompkins (1938)." },
+    { c: "Erie overruled this 1842 case, which let federal courts make their own \"general\" common law.",
+      r: "What is Swift v. Tyson?", n: "Erie read the Rules of Decision Act to include state court decisions, not just state statutes." },
+    { c: "Under Erie, federal courts apply state substantive law but federal law on issues of this type.",
+      r: "What is procedural?", n: "The hard part is classifying a rule as substantive or procedural. York, Byrd, and Hanna are all tests for drawing that line." },
+    { c: "In this 1965 case, the Federal Rule on service beat a Massachusetts service rule.",
+      r: "What is Hanna v. Plumer?", n: "When a valid Federal Rule directly covers the issue, it controls. Hanna also named Erie's \"twin aims\": discourage forum-shopping and avoid inequitable administration of the laws." },
+    { c: "Guaranty Trust v. York's test asks whether ignoring the state rule would change this.",
+      r: "What is the outcome of the case (the outcome-determinative test)?", n: "Under York, a state statute of limitations applies in diversity because ignoring it could change who wins." }
+  ]},
+  { name: "Plausibly Pleaded", sub: "Pleading & amendment · Wks 12–13 · Ch. 7", clues: [
+    { c: "This is the first pleading filed by the plaintiff to start a civil lawsuit.",
+      r: "What is the complaint?", n: "Rule 3: a civil action is commenced by filing a complaint with the court." },
+    { c: "Rule 8 requires \"a short and plain statement of the claim showing that the pleader is entitled to\" this.",
+      r: "What is relief?", n: "Notice pleading under Rule 8(a)(2). California uses fact pleading instead (CCP § 425.10)." },
+    { c: "Twombly and Iqbal require a complaint to state a claim that is this, not merely conceivable.",
+      r: "What is plausible?", n: "Iqbal's two steps: set aside legal conclusions, then ask whether the remaining facts plausibly show entitlement to relief." },
+    { c: "This Rule 12 motion argues the complaint fails to state a claim upon which relief can be granted.",
+      r: "What is a Rule 12(b)(6) motion?", n: "The motion where Twombly and Iqbal's plausibility standard is applied. The court accepts well-pleaded facts as true." },
+    { c: "Rule 15(a) says courts should freely allow this \"when justice so requires,\" as the court did for the slide maker in Beeck v. Aquaslide.",
+      r: "What is amendment of the pleadings (leave to amend)?", n: "Aquaslide was allowed to amend its answer to deny that it made the slide, after first admitting it." }
+  ]}
+];
+const FINAL = {
+  cat: "Getting Into Court",
+  c: "Pennoyer, Mullane, and Hanna all involved this basic step of starting a lawsuit: formally delivering the papers to the defendant.",
+  r: "What is service of process?",
+  n: "Pennoyer: service by publication couldn't support a personal judgment against an absent nonresident. Mullane: notice must be reasonably calculated to reach interested parties. Hanna: Federal Rule 4 governed service in a diversity case."
+};
+const KEY = "civpro215a-jeopardy-v2";
+let S = null;   // persisted game state
+let O = null;   // open overlay state
+let timerId = null;
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const money = (n) => (n < 0 ? "−$" : "$") + Math.abs(n).toLocaleString("en-US");
+
+function pickDD() {
+  const cols = [0, 1, 2, 3, 4, 5].sort(() => Math.random() - 0.5).slice(0, 2);
+  return cols.map((c) => c + "-" + (1 + Math.floor(Math.random() * 4)));
+}
+function fresh(names) {
+  const n = names || ["Team 1", "Team 2", "Team 3"];
+  return { teams: n.map((name) => ({ name, score: 0 })), used: {}, dd: pickDD(), hist: [] };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); return v && v.teams ? v : null; } catch (e) { return null; } }
+
+function renderBoard() {
+  let h = CATS.map((c) => `<div class="cat"><b>${esc(c.name)}</b><small>${esc(c.sub)}</small></div>`).join("");
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) {
+    const k = c + "-" + r, used = S.used[k];
+    h += `<button type="button" class="tile${used ? " used" : ""}" data-c="${c}" data-r="${r}" ${used ? "disabled aria-label=\"Used\"" : `aria-label="${esc(CATS[c].name)} for ${VALUES[r]}"`}>${used ? "" : "$" + VALUES[r]}</button>`;
+  }
+  $("#board").innerHTML = h;
+}
+function renderTeams() {
+  let h = S.teams.map((t, i) => `<div class="team">
+      <input id="team-name-${i}" data-name="${i}" value="${esc(t.name)}" aria-label="Team ${i + 1} name" maxlength="24">
+      <div class="score${t.score < 0 ? " neg" : ""}">${money(t.score)}</div>
+      <div class="adj"><button type="button" data-adj="-100" data-t="${i}">−100</button><button type="button" data-adj="100" data-t="${i}">+100</button>${S.teams.length > 2 ? `<button type="button" data-rm="${i}">Remove</button>` : ""}</div>
+    </div>`).join("");
+  if (S.teams.length < 6) h += `<button type="button" class="add-team" id="add-team">+ Add team</button>`;
+  $("#teams").innerHTML = h;
+  $("#btn-undo").disabled = !S.hist.length;
+}
+function score(t, d) {
+  S.teams[t].score += d; S.hist.push({ t, d }); save(); renderTeams();
+}
+
+/* ---------- overlay ---------- */
+function head(cat, val) { return `<div class="ov-head"><span class="ov-cat">${esc(cat)}</span><span class="ov-val">${val}</span></div>`; }
+function marksHtml(teamIdx, amt) {
+  return `<div class="marks">${teamIdx.map((i) => {
+    const m = O.marked[i], a = typeof amt === "function" ? amt(i) : amt;
+    return `<div class="mark"><span class="nm">${esc(S.teams[i].name)}</span>${m
+      ? `<span class="tag ${m}">${m === "right" ? "+" : "−"}${money(a).replace("−", "")}</span>`
+      : `<button type="button" class="ok" data-act="mark" data-t="${i}" data-ok="1" aria-label="${esc(S.teams[i].name)} correct">✓</button><button type="button" class="no" data-act="mark" data-t="${i}" data-ok="0" aria-label="${esc(S.teams[i].name)} incorrect">✗</button>`}</div>`;
+  }).join("")}</div>`;
+}
+function respHtml(x) { return O.revealed ? `<div class="resp"><div class="r">${esc(x.r)}</div><div class="n">${esc(x.n)}</div></div>` : ""; }
+
+function renderOverlay() {
+  const ov = $("#ov");
+  if (!O) { ov.hidden = true; ov.innerHTML = ""; return; }
+  ov.hidden = false;
+  let h = "";
+  if (O.mode === "dd") {
+    const max = O.t == null ? 1000 : Math.max(S.teams[O.t].score, 1000);
+    h = `<div class="ov">${head(CATS[O.c].name, "$" + VALUES[O.r])}
+      <div class="ov-body"><div class="dd-title">Daily Double</div>
+        <div class="dd-panel"><span class="label">Which team picked it?</span>
+          <div class="chips">${S.teams.map((t, i) => `<button type="button" class="chip${O.t === i ? " on" : ""}" data-act="ddteam" data-t="${i}">${esc(t.name)}</button>`).join("")}</div>
+          <span class="label">Wager (5 to ${money(max)})</span>
+          <input class="wager" id="dd-wager" type="number" min="5" max="${max}" step="100" value="${esc(O.wager)}" inputmode="numeric">
+        </div></div>
+      <div class="ov-foot"><div class="actions"><button type="button" class="btn" data-act="close">Back to board</button><button type="button" class="btn primary" data-act="ddgo" ${O.t == null ? "disabled" : ""}>Show the clue</button></div></div></div>`;
+  } else if (O.mode === "clue") {
+    const x = CATS[O.c].clues[O.r];
+    const teams = O.dd ? [O.t] : S.teams.map((_, i) => i);
+    h = `<div class="ov">${head(CATS[O.c].name, O.dd ? "Daily Double · " + money(O.value) : "$" + O.value)}
+      <div class="ov-body"><p class="clue">${esc(x.c)}</p>${respHtml(x)}</div>
+      <div class="ov-foot">${marksHtml(teams, O.value)}
+        <div class="actions">${O.revealed ? "" : `<button type="button" class="btn primary" data-act="reveal">Reveal response</button>`}<button type="button" class="btn" data-act="close">Back to board</button></div></div></div>`;
+  } else if (O.mode === "fwager") {
+    h = `<div class="ov">${head("Final Jeopardy", "")}
+      <div class="ov-body"><span class="label">The category is</span><p class="clue">${esc(FINAL.cat)}</p>
+        <div class="fw">${S.teams.map((t, i) => { const mx = Math.max(t.score, 0); return `<label for="final-wager-${i}"><span>${esc(t.name)}</span>
+          <input class="wager" id="final-wager-${i}" data-fw="${i}" type="number" min="0" max="${mx}" step="100" value="${esc(O.wagers[i] ?? "")}" inputmode="numeric" ${mx === 0 ? "disabled" : ""}>
+          <small>${mx === 0 ? "No positive score, wager $0" : "Up to " + money(mx)}</small></label>`; }).join("")}</div></div>
+      <div class="ov-foot"><div class="actions"><button type="button" class="btn" data-act="close">Back to board</button><button type="button" class="btn primary" data-act="fgo">Show the clue</button></div></div></div>`;
+  } else if (O.mode === "fclue") {
+    h = `<div class="ov">${head("Final Jeopardy · " + FINAL.cat, "")}
+      <div class="ov-body"><p class="clue">${esc(FINAL.c)}</p>${respHtml(FINAL)}</div>
+      <div class="ov-foot">${O.revealed ? marksHtml(S.teams.map((_, i) => i), (i) => O.wagers[i] || 0) : `<div class="actions"><span class="timer" id="ov-timer">${O.timer == null ? "0:30" : "0:" + String(O.timer).padStart(2, "0")}</span></div>`}
+        <div class="actions">${O.revealed
+          ? `<button type="button" class="btn primary" data-act="stand">Final standings</button>`
+          : `<button type="button" class="btn" data-act="timer">Start 30-second clock</button><button type="button" class="btn primary" data-act="reveal">Reveal response</button>`}</div></div></div>`;
+  } else if (O.mode === "stand") {
+    const rows = S.teams.map((t) => t).sort((a, b) => b.score - a.score);
+    h = `<div class="ov">${head("Final standings", "")}
+      <div class="ov-body"><div class="dd-title">${esc(rows[0].name)}</div>
+        <div class="stand">${rows.map((t) => `<div><span>${esc(t.name)}</span><b>${money(t.score)}</b></div>`).join("")}</div></div>
+      <div class="ov-foot"><div class="actions"><button type="button" class="btn" data-act="close">Back to board</button></div></div></div>`;
+  }
+  ov.innerHTML = h;
+  ov.scrollTop = 0;
+}
+function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+function closeOverlay() {
+  stopTimer();
+  if (O && O.mode === "dd") { delete S.used[O.c + "-" + O.r]; save(); renderBoard(); }
+  O = null; renderOverlay();
+}
+function reveal() { if (O && (O.mode === "clue" || O.mode === "fclue") && !O.revealed) { stopTimer(); O.revealed = true; renderOverlay(); } }
+
+function openClue(c, r) {
+  const k = c + "-" + r;
+  S.used[k] = true; save(); renderBoard();
+  O = S.dd.includes(k) ? { mode: "dd", c, r, t: null, wager: "" } : { mode: "clue", c, r, value: VALUES[r], marked: {}, revealed: false };
+  renderOverlay();
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.classList.contains("tile") && !b.disabled) return openClue(+b.dataset.c, +b.dataset.r);
+  if (b.dataset.adj) return score(+b.dataset.t, +b.dataset.adj);
+  if (b.dataset.rm) { S.teams.splice(+b.dataset.rm, 1); S.hist = []; save(); return renderTeams(); }
+  if (b.id === "add-team") { S.teams.push({ name: "Team " + (S.teams.length + 1), score: 0 }); save(); return renderTeams(); }
+  if (b.id === "btn-undo") { const h = S.hist.pop(); if (h && S.teams[h.t]) S.teams[h.t].score -= h.d; save(); return renderTeams(); }
+  if (b.id === "btn-final") { O = { mode: "fwager", wagers: {}, marked: {}, revealed: false }; return renderOverlay(); }
+  if (b.id === "btn-new") {
+    if (!b.classList.contains("armed")) {
+      b.classList.add("armed"); b.textContent = "Click again to reset";
+      setTimeout(() => { b.classList.remove("armed"); b.textContent = "New game"; }, 3500);
+      return;
+    }
+    S = fresh(S.teams.map((t) => t.name)); save(); b.classList.remove("armed"); b.textContent = "New game";
+    renderBoard(); return renderTeams();
+  }
+  const act = b.dataset.act;
+  if (!act || !O) return;
+  if (act === "close") return closeOverlay();
+  if (act === "reveal") return reveal();
+  if (act === "ddteam") { O.t = +b.dataset.t; O.wager = $("#dd-wager").value; renderOverlay(); return $("#dd-wager").focus(); }
+  if (act === "ddgo") {
+    const max = Math.max(S.teams[O.t].score, 1000);
+    let w = Math.round(Number($("#dd-wager").value) || 0);
+    w = Math.min(Math.max(w, 5), max);
+    O = { mode: "clue", dd: true, c: O.c, r: O.r, t: O.t, value: w, marked: {}, revealed: false };
+    return renderOverlay();
+  }
+  if (act === "mark") {
+    const t = +b.dataset.t, ok = b.dataset.ok === "1";
+    const amt = O.mode === "fclue" ? (O.wagers[t] || 0) : O.value;
+    score(t, ok ? amt : -amt);
+    O.marked[t] = ok ? "right" : "wrong";
+    if (ok && O.mode === "clue") O.revealed = true;
+    return renderOverlay();
+  }
+  if (act === "fgo") {
+    S.teams.forEach((t, i) => { const mx = Math.max(t.score, 0); O.wagers[i] = Math.min(Math.max(Math.round(Number(O.wagers[i]) || 0), 0), mx); });
+    O.mode = "fclue"; O.timer = null; return renderOverlay();
+  }
+  if (act === "timer") {
+    stopTimer(); O.timer = 30; b.textContent = "Restart clock";
+    const el = $("#ov-timer"); el.classList.remove("done"); el.textContent = "0:30";
+    timerId = setInterval(() => {
+      if (!O) return stopTimer();
+      O.timer--; const t = $("#ov-timer");
+      if (t) { t.textContent = "0:" + String(Math.max(O.timer, 0)).padStart(2, "0"); if (O.timer <= 0) t.classList.add("done"); }
+      if (O.timer <= 0) stopTimer();
+    }, 1000);
+    return;
+  }
+  if (act === "stand") { O = { mode: "stand" }; return renderOverlay(); }
+});
+document.addEventListener("input", (e) => {
+  const el = e.target;
+  if (el.dataset.name != null) { S.teams[+el.dataset.name].name = el.value || "Team " + (+el.dataset.name + 1); save(); }
+  if (el.dataset.fw != null && O) O.wagers[+el.dataset.fw] = el.value;
+  if (el.id === "dd-wager" && O) O.wager = el.value;
+});
+document.addEventListener("change", (e) => { if (e.target.dataset.name != null) renderTeams(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && O) { e.preventDefault(); return closeOverlay(); }
+  if (e.target.tagName === "INPUT") return;
+  if ((e.key === " " || e.key === "Enter") && O && (O.mode === "clue" || O.mode === "fclue") && !O.revealed) { e.preventDefault(); reveal(); }
+});
+
+function start(data) {
+  S = (data && data.S && data.S.teams) ? data.S : (load() || fresh());
+  renderBoard(); renderTeams();
+}
+window.claude?.hot?.snapshot?.(() => ({ S }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
